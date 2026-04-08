@@ -1,11 +1,12 @@
 package com.protasknewbbbx.web.rest;
 
+import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.protasknewbbbx.IntegrationTest;
+import com.protasknewbbbx.ProtasknewbbbxApp;
 import com.protasknewbbbx.domain.enumeration.TaskStatus;
 import com.protasknewbbbx.service.DashboardService;
 import com.protasknewbbbx.service.dto.OverdueTasksDTO;
@@ -17,21 +18,25 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Integration tests for the {@link DashboardResource} REST controller.
  */
-@IntegrationTest
+@SpringBootTest(classes = ProtasknewbbbxApp.class)
 @AutoConfigureMockMvc
 @WithMockUser
 class DashboardResourceIT {
 
+    private static final String API_BASE_URL = "/api/dashboard";
+
     @Autowired
-    private ObjectMapper om; // For JSON serialization/deserialization
+    private ObjectMapper om;
 
     @MockBean
     private DashboardService dashboardService;
@@ -40,63 +45,60 @@ class DashboardResourceIT {
     private MockMvc restDashboardMockMvc;
 
     @BeforeEach
-    void setUp() {
-        // Reset mocks before each test if necessary
+    public void setup() {
+        // Reset mocks before each test
         reset(dashboardService);
     }
 
     @Test
     void getTaskStatsByStatus() throws Exception {
-        Map<TaskStatus, Long> counts = new HashMap<>();
-        counts.put(TaskStatus.TODO, 5L);
-        counts.put(TaskStatus.IN_PROGRESS, 3L);
-        counts.put(TaskStatus.DONE, 2L);
-        counts.put(TaskStatus.CANCELLED, 1L);
-        TaskStatsDTO taskStatsDTO = new TaskStatsDTO(counts);
+        Map<TaskStatus, Long> statusCounts = new HashMap<>();
+        statusCounts.put(TaskStatus.TODO, 5L);
+        statusCounts.put(TaskStatus.IN_PROGRESS, 3L);
+        statusCounts.put(TaskStatus.DONE, 2L);
+        TaskStatsDTO mockDto = new TaskStatsDTO(statusCounts);
 
-        when(dashboardService.getTaskStatsByStatus()).thenReturn(taskStatsDTO);
+        when(dashboardService.getTaskStatsByStatusForCurrentUser()).thenReturn(mockDto);
 
         restDashboardMockMvc
-            .perform(get("/api/dashboard/task-stats").accept(MediaType.APPLICATION_JSON))
+            .perform(get(API_BASE_URL + "/task-stats-by-status").accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("$.countsByStatus.TODO").value(5))
-            .andExpect(jsonPath("$.countsByStatus.IN_PROGRESS").value(3))
-            .andExpect(jsonPath("$.countsByStatus.DONE").value(2))
-            .andExpect(jsonPath("$.countsByStatus.CANCELLED").value(1));
+            .andExpect(jsonPath("$.statusCounts.TODO").value(5))
+            .andExpect(jsonPath("$.statusCounts.IN_PROGRESS").value(3))
+            .andExpect(jsonPath("$.statusCounts.DONE").value(2));
 
-        verify(dashboardService).getTaskStatsByStatus();
+        verify(dashboardService, times(1)).getTaskStatsByStatusForCurrentUser();
     }
 
     @Test
     void getOverdueTasksCount() throws Exception {
-        OverdueTasksDTO overdueTasksDTO = new OverdueTasksDTO(10L);
+        OverdueTasksDTO mockDto = new OverdueTasksDTO(7L);
 
-        when(dashboardService.getOverdueTasksCount()).thenReturn(overdueTasksDTO);
+        when(dashboardService.getOverdueTasksCountForCurrentUser()).thenReturn(mockDto);
 
         restDashboardMockMvc
-            .perform(get("/api/dashboard/overdue-tasks").accept(MediaType.APPLICATION_JSON))
+            .perform(get(API_BASE_URL + "/overdue-tasks-count").accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("$.overdueCount").value(10));
+            .andExpect(jsonPath("$.overdueCount").value(7));
 
-        verify(dashboardService).getOverdueTasksCount();
+        verify(dashboardService, times(1)).getOverdueTasksCountForCurrentUser();
     }
 
     @Test
     void getTaskProgress() throws Exception {
-        TaskProgressDTO taskProgressDTO = new TaskProgressDTO(20L, 10L, 50.0);
+        TaskProgressDTO mockDto = new TaskProgressDTO(10L, 20L);
 
-        when(dashboardService.getTaskProgress()).thenReturn(taskProgressDTO);
+        when(dashboardService.getTaskProgressForCurrentUser()).thenReturn(mockDto);
 
         restDashboardMockMvc
-            .perform(get("/api/dashboard/task-progress").accept(MediaType.APPLICATION_JSON))
+            .perform(get(API_BASE_URL + "/task-progress").accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("$.totalTasks").value(20))
             .andExpect(jsonPath("$.completedTasks").value(10))
-            .andExpect(jsonPath("$.completionPercentage").value(50.0));
+            .andExpect(jsonPath("$.totalTasks").value(20));
 
-        verify(dashboardService).getTaskProgress();
+        verify(dashboardService, times(1)).getTaskProgressForCurrentUser();
     }
 }
