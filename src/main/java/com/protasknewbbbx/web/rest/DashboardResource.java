@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing dashboard data.
@@ -28,38 +27,38 @@ public class DashboardResource {
     }
 
     /**
-     * {@code GET /dashboard/task-stats} : get task statistics by status for the current user.
+     * {@code GET /dashboard/task-stats-by-status} : get task statistics by status for the current user.
      *
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the TaskStatsDTO.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the {@link TaskStatsDTO}.
      */
-    @GetMapping("/task-stats")
+    @GetMapping("/task-stats-by-status")
     public ResponseEntity<TaskStatsDTO> getTaskStatsByStatus() {
-        log.debug("REST request to get TaskStatsDTO");
-        TaskStatsDTO result = dashboardService.getTaskStatsByStatus();
-        return ResponseEntity.ok(result);
+        log.debug("REST request to get task stats by status for current user");
+        TaskStatsDTO result = dashboardService.getTaskStatsByStatusForCurrentUser();
+        return ResponseEntity.ok().body(result);
     }
 
     /**
-     * {@code GET /dashboard/overdue-tasks} : get the count of overdue tasks for the current user.
+     * {@code GET /dashboard/overdue-tasks-count} : get the count of overdue tasks for the current user.
      *
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the OverdueTasksDTO.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the {@link OverdueTasksDTO}.
      */
-    @GetMapping("/overdue-tasks")
+    @GetMapping("/overdue-tasks-count")
     public ResponseEntity<OverdueTasksDTO> getOverdueTasksCount() {
-        log.debug("REST request to get OverdueTasksDTO");
-        OverdueTasksDTO result = dashboardService.getOverdueTasksCount();
-        return ResponseEntity.ok(result);
+        log.debug("REST request to get overdue tasks count for current user");
+        OverdueTasksDTO result = dashboardService.getOverdueTasksCountForCurrentUser();
+        return ResponseEntity.ok().body(result);
     }
 
     /**
-     * {@code GET /dashboard/task-progress} : get the overall task progression for the current user.
+     * {@code GET /dashboard/task-progress} : get the overall task progress for the current user.
      *
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the TaskProgressDTO.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the {@link TaskProgressDTO}.
      */
     @GetMapping("/task-progress")
     public ResponseEntity<TaskProgressDTO> getTaskProgress() {
-        log.debug("REST request to get TaskProgressDTO");
-        TaskProgressDTO result = dashboardService.getTaskProgress();
-        return ResponseEntity.ok(result);
+        log.debug("REST request to get task progress for current user");
+        TaskProgressDTO result = dashboardService.getTaskProgressForCurrentUser();
+        return ResponseEntity.ok().body(result);
     }
 }
