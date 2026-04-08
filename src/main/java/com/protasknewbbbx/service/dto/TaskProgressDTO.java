@@ -5,25 +5,15 @@ import java.util.Objects;
 
 public class TaskProgressDTO implements Serializable {
 
-    private Long totalTasks;
     private Long completedTasks;
-    private Double completionPercentage;
+    private Long totalTasks;
 
     public TaskProgressDTO() {
-        // Empty constructor needed for Jackson.
+        // Empty constructor needed for Jackson/Spring
     }
 
-    public TaskProgressDTO(Long totalTasks, Long completedTasks, Double completionPercentage) {
-        this.totalTasks = totalTasks;
+    public TaskProgressDTO(Long completedTasks, Long totalTasks) {
         this.completedTasks = completedTasks;
-        this.completionPercentage = completionPercentage;
-    }
-
-    public Long getTotalTasks() {
-        return totalTasks;
-    }
-
-    public void setTotalTasks(Long totalTasks) {
         this.totalTasks = totalTasks;
     }
 
@@ -35,35 +25,44 @@ public class TaskProgressDTO implements Serializable {
         this.completedTasks = completedTasks;
     }
 
-    public Double getCompletionPercentage() {
-        return completionPercentage;
+    public Long getTotalTasks() {
+        return totalTasks;
     }
 
-    public void setCompletionPercentage(Double completionPercentage) {
-        this.completionPercentage = completionPercentage;
+    public void setTotalTasks(Long totalTasks) {
+        this.totalTasks = totalTasks;
+    }
+
+    public Double getProgressPercentage() {
+        if (totalTasks == null || totalTasks == 0) {
+            return 0.0;
+        }
+        return (double) completedTasks / totalTasks * 100.0;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         TaskProgressDTO that = (TaskProgressDTO) o;
-        return Objects.equals(totalTasks, that.totalTasks) &&
-               Objects.equals(completedTasks, that.completedTasks) &&
-               Objects.equals(completionPercentage, that.completionPercentage);
+        return Objects.equals(completedTasks, that.completedTasks) &&
+               Objects.equals(totalTasks, that.totalTasks);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(totalTasks, completedTasks, completionPercentage);
+        return Objects.hash(completedTasks, totalTasks);
     }
 
     @Override
     public String toString() {
         return "TaskProgressDTO{" +
-               "totalTasks=" + totalTasks +
-               ", completedTasks=" + completedTasks +
-               ", completionPercentage=" + completionPercentage +
+               "completedTasks=" + completedTasks +
+               ", totalTasks=" + totalTasks +
                '}';
     }
 }
