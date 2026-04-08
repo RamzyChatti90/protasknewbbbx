@@ -8,7 +8,7 @@ public class OverdueTasksDTO implements Serializable {
     private Long overdueCount;
 
     public OverdueTasksDTO() {
-        // Empty constructor needed for Jackson.
+        // Empty constructor needed for Jackson/Spring
     }
 
     public OverdueTasksDTO(Long overdueCount) {
@@ -25,8 +25,12 @@ public class OverdueTasksDTO implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         OverdueTasksDTO that = (OverdueTasksDTO) o;
         return Objects.equals(overdueCount, that.overdueCount);
     }
