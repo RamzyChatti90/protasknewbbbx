@@ -3,129 +3,125 @@ package com.protasknewbbbx.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import com.protasknewbbbx.ProtasknewbbbxApp;
+import com.protasknewbbbx.config.Constants;
 import com.protasknewbbbx.domain.Task;
+import com.protasknewbbbx.domain.User;
 import com.protasknewbbbx.domain.enumeration.TaskStatus;
 import com.protasknewbbbx.repository.TaskRepository;
+import com.protasknewbbbx.repository.UserRepository;
 import com.protasknewbbbx.security.SecurityUtils;
 import com.protasknewbbbx.service.dto.OverdueTasksDTO;
 import com.protasknewbbbx.service.dto.TaskProgressDTO;
 import com.protasknewbbbx.service.dto.TaskStatsDTO;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.annotation.Transactional;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest(classes = ProtasknewbbbxApp.class)
+@Transactional
 class DashboardServiceTest {
 
     @Mock
     private TaskRepository taskRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private DashboardService dashboardService;
 
-    private static final String TEST_USER_LOGIN = "testuser";
+    private User testUser;
 
-    // SecurityUtils.getCurrentUserLogin() needs to be mocked for each test that uses it.
-    // Using MockedStatic within each test or a helper method for clarity.
+    @BeforeEach
+    public void setup() {
+        testUser = new User();
+        testUser.setId(1L);
+        testUser.setLogin("testuser");
+        testUser.setEmail("testuser@localhost");
 
-    @Test
-    void getTaskStatsByStatus_shouldReturnCorrectCounts() {
-        try (MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(SecurityUtils.class)) {
-            mockedSecurityUtils.when(SecurityUtils::getCurrentUserLogin).thenReturn(Optional.of(TEST_USER_LOGIN));
+        // Mock SecurityContextHolder for SecurityUtils
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(new UsernamePasswordAuthenticationToken("testuser", "password"));
+        SecurityContextHolder.setContext(securityContext);
 
-            // Given
-            when(taskRepository.countByOwnerLoginAndStatus(TEST_USER_LOGIN, TaskStatus.TODO)).thenReturn(5L);
-            when(taskRepository.countByOwnerLoginAndStatus(TEST_USER_LOGIN, TaskStatus.IN_PROGRESS)).thenReturn(3L);
-            when(taskRepository.countByOwnerLoginAndStatus(TEST_USER_LOGIN, TaskStatus.DONE)).thenReturn(2L);
-            when(taskRepository.countByOwnerLoginAndStatus(TEST_USER_LOGIN, TaskStatus.CANCELLED)).thenReturn(1L);
-
-            // When
-            TaskStatsDTO result = dashboardService.getTaskStatsByStatus();
-
-            // Then
-            assertThat(result).isNotNull();
-            assertThat(result.getCountsByStatus()).hasSize(TaskStatus.values().length);
-            assertThat(result.getCountsByStatus().get(TaskStatus.TODO)).isEqualTo(5L);
-            assertThat(result.getCountsByStatus().get(TaskStatus.IN_PROGRESS)).isEqualTo(3L);
-            assertThat(result.getCountsByStatus().get(TaskStatus.DONE)).isEqualTo(2L);
-            assertThat(result.getCountsByStatus().get(TaskStatus.CANCELLED)).isEqualTo(1L);
-
-            verify(taskRepository, times(TaskStatus.values().length)).countByOwnerLoginAndStatus(anyString(), any(TaskStatus.class));
-        }
+        when(userRepository.findOneByLogin("testuser")).thenReturn(Optional.of(testUser));
     }
 
     @Test
-    void getOverdueTasksCount_shouldReturnCorrectCount() {
-        try (MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(SecurityUtils.class)) {
-            mockedSecurityUtils.when(SecurityUtils::getCurrentUserLogin).thenReturn(Optional.of(TEST_USER_LOGIN));
+    void getTaskStatsByStatusForCurrentUser_shouldReturnCorrectCounts() {
+        Task task1 = new Task().status(TaskStatus.TODO).user(testUser);
+        Task task2 = new Task().status(TaskStatus.TODO).user(testUser);
+        Task task3 = new Task().status(TaskStatus.IN_PROGRESS).user(testUser);
+        Task task4 = new Task().status(TaskStatus.DONE).user(testUser);
 
-            // Given
-            when(taskRepository.countByOwnerLoginAndDueDateBeforeAndStatusIsNot(eq(TEST_USER_LOGIN), any(Instant.class), eq(TaskStatus.DONE)))
-                .thenReturn(7L);
+        List<Task> tasks = Arrays.asList(task1, task2, task3, task4);
+        when(taskRepository.findByUser(testUser)).thenReturn(tasks);
 
-            // When
-            OverdueTasksDTO result = dashboardService.getOverdueTasksCount();
+        TaskStatsDTO result = dashboardService.getTaskStatsByStatusForCurrentUser();
 
-            // Then
-            assertThat(result).isNotNull();
-            assertThat(result.getOverdueCount()).isEqualTo(7L);
-
-            verify(taskRepository).countByOwnerLoginAndDueDateBeforeAndStatusIsNot(eq(TEST_USER_LOGIN), any(Instant.class), eq(TaskStatus.DONE));
-        }
+        assertThat(result).isNotNull();
+        Map<TaskStatus, Long> expectedCounts = new HashMap<>();
+        expectedCounts.put(TaskStatus.TODO, 2L);
+        expectedCounts.put(TaskStatus.IN_PROGRESS, 1L);
+        expectedCounts.put(TaskStatus.DONE, 1L);
+        assertThat(result.getStatusCounts()).isEqualTo(expectedCounts);
     }
 
     @Test
-    void getTaskProgress_shouldReturnCorrectProgress() {
-        try (MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(SecurityUtils.class)) {
-            mockedSecurityUtils.when(SecurityUtils::getCurrentUserLogin).thenReturn(Optional.of(TEST_USER_LOGIN));
+    void getOverdueTasksCountForCurrentUser_shouldReturnCorrectCount() {
+        Instant now = Instant.now();
+        Instant past = now.minus(1, ChronoUnit.DAYS);
 
-            // Given
-            when(taskRepository.countByOwnerLogin(TEST_USER_LOGIN)).thenReturn(10L);
-            when(taskRepository.countByOwnerLoginAndStatus(TEST_USER_LOGIN, TaskStatus.DONE)).thenReturn(4L);
+        when(taskRepository.countByUserAndDueDateBeforeAndStatusIsNot(eq(testUser), any(Instant.class), eq(TaskStatus.DONE)))
+            .thenReturn(2L);
 
-            // When
-            TaskProgressDTO result = dashboardService.getTaskProgress();
+        OverdueTasksDTO result = dashboardService.getOverdueTasksCountForCurrentUser();
 
-            // Then
-            assertThat(result).isNotNull();
-            assertThat(result.getTotalTasks()).isEqualTo(10L);
-            assertThat(result.getCompletedTasks()).isEqualTo(4L);
-            assertThat(result.getCompletionPercentage()).isEqualTo(40.0);
-
-            verify(taskRepository).countByOwnerLogin(TEST_USER_LOGIN);
-            verify(taskRepository).countByOwnerLoginAndStatus(TEST_USER_LOGIN, TaskStatus.DONE);
-        }
+        assertThat(result).isNotNull();
+        assertThat(result.getOverdueCount()).isEqualTo(2L);
     }
 
     @Test
-    void getTaskProgress_shouldHandleZeroTotalTasks() {
-        try (MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(SecurityUtils.class)) {
-            mockedSecurityUtils.when(SecurityUtils::getCurrentUserLogin).thenReturn(Optional.of(TEST_USER_LOGIN));
+    void getTaskProgressForCurrentUser_shouldReturnCorrectProgress() {
+        when(taskRepository.countByUser(testUser)).thenReturn(10L);
+        when(taskRepository.countByUserAndStatus(testUser, TaskStatus.DONE)).thenReturn(3L);
 
-            // Given
-            when(taskRepository.countByOwnerLogin(TEST_USER_LOGIN)).thenReturn(0L);
-            when(taskRepository.countByOwnerLoginAndStatus(TEST_USER_LOGIN, TaskStatus.DONE)).thenReturn(0L);
+        TaskProgressDTO result = dashboardService.getTaskProgressForCurrentUser();
 
-            // When
-            TaskProgressDTO result = dashboardService.getTaskProgress();
+        assertThat(result).isNotNull();
+        assertThat(result.getCompletedTasks()).isEqualTo(3L);
+        assertThat(result.getTotalTasks()).isEqualTo(10L);
+        assertThat(result.getProgressPercentage()).isEqualTo(30.0);
+    }
 
-            // Then
-            assertThat(result).isNotNull();
-            assertThat(result.getTotalTasks()).isEqualTo(0L);
-            assertThat(result.getCompletedTasks()).isEqualTo(0L);
-            assertThat(result.getCompletionPercentage()).isEqualTo(0.0);
+    @Test
+    void getTaskProgressForCurrentUser_noTasks_shouldReturnZeroProgress() {
+        when(taskRepository.countByUser(testUser)).thenReturn(0L);
+        when(taskRepository.countByUserAndStatus(testUser, TaskStatus.DONE)).thenReturn(0L);
 
-            verify(taskRepository).countByOwnerLogin(TEST_USER_LOGIN);
-            verify(taskRepository).countByOwnerLoginAndStatus(TEST_USER_LOGIN, TaskStatus.DONE);
-        }
+        TaskProgressDTO result = dashboardService.getTaskProgressForCurrentUser();
+
+        assertThat(result).isNotNull();
+        assertThat(result.getCompletedTasks()).isEqualTo(0L);
+        assertThat(result.getTotalTasks()).isEqualTo(0L);
+        assertThat(result.getProgressPercentage()).isEqualTo(0.0);
     }
 }
