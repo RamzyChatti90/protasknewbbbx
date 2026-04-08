@@ -1,0 +1,70 @@
+<div class="d-flex justify-content-center">
+  <div class="col-8">
+    @if (task(); as taskRef) {
+      <div>
+        <h2 data-cy="taskDetailsHeading"><span jhiTranslate="protasknewbbbxApp.task.detail.title">Task</span></h2>
+
+        <hr />
+
+        <jhi-alert-error />
+
+        <jhi-alert />
+
+        <dl class="row-md jh-entity-details">
+          <dt><span jhiTranslate="global.field.id">ID</span></dt>
+          <dd>
+            <span>{{ taskRef.id }}</span>
+          </dd>
+          <dt><span jhiTranslate="protasknewbbbxApp.task.title">Title</span></dt>
+          <dd>
+            <span>{{ taskRef.title }}</span>
+          </dd>
+          <dt><span jhiTranslate="protasknewbbbxApp.task.description">Description</span></dt>
+          <dd>
+            <span>{{ taskRef.description }}</span>
+          </dd>
+          <dt><span jhiTranslate="protasknewbbbxApp.task.priority">Priority</span></dt>
+          <dd>
+            <span [jhiTranslate]="'protasknewbbbxApp.Priority.' + (taskRef.priority ?? 'null')">{{
+              { null: '', LOW: 'LOW', MEDIUM: 'MEDIUM', HIGH: 'HIGH', URGENT: 'URGENT' }[taskRef.priority ?? 'null']
+            }}</span>
+          </dd>
+          <dt><span jhiTranslate="protasknewbbbxApp.task.status">Status</span></dt>
+          <dd>
+            <span [jhiTranslate]="'protasknewbbbxApp.Status.' + (taskRef.status ?? 'null')">{{
+              { null: '', TODO: 'TODO', IN_PROGRESS: 'IN_PROGRESS', DONE: 'DONE', BLOCKED: 'BLOCKED' }[taskRef.status ?? 'null']
+            }}</span>
+          </dd>
+          <dt><span jhiTranslate="protasknewbbbxApp.task.dueDate">Due Date</span></dt>
+          <dd>
+            <span>{{ taskRef.dueDate | formatMediumDate }}</span>
+          </dd>
+          <dt><span jhiTranslate="protasknewbbbxApp.task.createdAt">Created At</span></dt>
+          <dd>
+            <span>{{ taskRef.createdAt | formatMediumDatetime }}</span>
+          </dd>
+          <dt><span jhiTranslate="protasknewbbbxApp.task.assignee">Assignee</span></dt>
+          <dd>
+            <span>{{ taskRef.assignee?.login }}</span>
+          </dd>
+          <dt><span jhiTranslate="protasknewbbbxApp.task.category">Category</span></dt>
+          <dd>
+            @if (task()!.category) {
+              <div>
+                <a [routerLink]="['/category', task()!.category?.id, 'view']">{{ taskRef.category?.id }}</a>
+              </div>
+            }
+          </dd>
+        </dl>
+
+        <button type="submit" (click)="previousState()" class="btn btn-info" data-cy="entityDetailsBackButton">
+          <fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+        </button>
+
+        <button type="button" [routerLink]="['/task', taskRef.id, 'edit']" class="btn btn-primary">
+          <fa-icon icon="pencil-alt"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+        </button>
+      </div>
+    }
+  </div>
+</div>

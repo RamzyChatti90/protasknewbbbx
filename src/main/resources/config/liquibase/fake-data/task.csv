@@ -1,0 +1,11 @@
+id;title;description;priority;status;due_date;created_at
+1;aw comparison;../fake-data/blob/hipster.txt;LOW;IN_PROGRESS;2026-04-07;2026-04-08T04:44:47
+2;clone bah;../fake-data/blob/hipster.txt;MEDIUM;DONE;2026-04-08;2026-04-08T04:22:34
+3;mmm weighty wallop;../fake-data/blob/hipster.txt;MEDIUM;TODO;2026-04-07;2026-04-08T11:04:40
+4;seagull youthfully;../fake-data/blob/hipster.txt;URGENT;IN_PROGRESS;2026-04-07;2026-04-08T10:14:04
+5;given contrast colorless;../fake-data/blob/hipster.txt;URGENT;TODO;2026-04-08;2026-04-08T13:49:16
+6;pinstripe;../fake-data/blob/hipster.txt;URGENT;BLOCKED;2026-04-08;2026-04-08T09:55:09
+7;excluding pish;../fake-data/blob/hipster.txt;LOW;DONE;2026-04-07;2026-04-08T07:05:44
+8;shy;../fake-data/blob/hipster.txt;URGENT;TODO;2026-04-08;2026-04-07T18:25:25
+9;fluffy;../fake-data/blob/hipster.txt;HIGH;IN_PROGRESS;2026-04-07;2026-04-08T11:13:29
+10;dreamily;../fake-data/blob/hipster.txt;MEDIUM;BLOCKED;2026-04-08;2026-04-08T02:27:13
